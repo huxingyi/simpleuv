@@ -8,14 +8,17 @@ INCLUDEPATH += thirdparty/libigl/include
 INCLUDEPATH += thirdparty/eigen
 INCLUDEPATH += thirdparty/squeezer
 
-SOURCES += simpleuv/parametrize.cpp
-HEADERS += simpleuv/parametrize.h
-
 SOURCES += simpleuv/uvunwrapper.cpp
 HEADERS += simpleuv/uvunwrapper.h
 
+SOURCES += simpleuv/parametrize.cpp
+HEADERS += simpleuv/parametrize.h
+
 SOURCES += simpleuv/chartpacker.cpp
 HEADERS += simpleuv/chartpacker.h
+
+SOURCES += simpleuv/triangulate.cpp
+HEADERS += simpleuv/triangulate.h
 
 HEADERS += simpleuv/meshdatatype.h
 

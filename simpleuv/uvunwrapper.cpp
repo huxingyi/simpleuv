@@ -4,6 +4,7 @@
 #include <simpleuv/uvunwrapper.h>
 #include <simpleuv/parametrize.h>
 #include <simpleuv/chartpacker.h>
+#include <simpleuv/triangulate.h>
 
 namespace simpleuv 
 {
@@ -118,7 +119,7 @@ void UvUnwrapper::calculateFaceTextureBoundingBox(const std::vector<FaceTextureC
 void UvUnwrapper::triangulateRing(const std::vector<Vertex> &verticies,
         std::vector<Face> &faces, const std::vector<size_t> &ring)
 {
-    // TODO:
+    triangulate(verticies, faces, ring);
 }
 
 // The hole filling faces should be put in the back of faces vector, so these uv coords of appended faces will be disgarded.
