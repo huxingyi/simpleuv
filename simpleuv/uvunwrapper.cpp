@@ -5,6 +5,7 @@
 #include <simpleuv/parametrize.h>
 #include <simpleuv/chartpacker.h>
 #include <simpleuv/triangulate.h>
+#include <QDebug>
 
 namespace simpleuv 
 {
@@ -152,6 +153,7 @@ bool UvUnwrapper::fixHolesExceptTheLongestRing(const std::vector<Vertex> &vertic
         while (true) {
             auto findLinkResult = holeVertexLink.find(index);
             if (findLinkResult == holeVertexLink.end()) {
+                qDebug() << "Search ring failed";
                 return false;
             }
             index = findLinkResult->second;
@@ -159,8 +161,10 @@ bool UvUnwrapper::fixHolesExceptTheLongestRing(const std::vector<Vertex> &vertic
                 break;
             }
             if (visited.find(index) != visited.end()) {
+                qDebug() << "Found infinite ring";
                 return false;
             }
+            visited.insert(index);
             ring.push_back(index);
             ringLength += distanceBetweenVertices(verticies[index], verticies[prev]);
             prev = index;
@@ -229,18 +233,23 @@ void UvUnwrapper::packCharts()
         float left, top, right, bottom;
         left = top = right = bottom = 0;
         calculateFaceTextureBoundingBox(chart.second, left, top, right, bottom);
+        std::pair<float, float> size = {right - left, bottom - top};
         for (auto &item: chart.second) {
             for (int i = 0; i < 3; ++i) {
                 item.coords[i].uv[0] -= left;
                 item.coords[i].uv[1] -= top;
             }
         }
-        chartSizes.push_back({right - left, bottom - top});
+        qDebug() << "left:" << left << "top:" << top << "right:" << right << "bottom:" << bottom;
+        qDebug() << "width:" << size.first << "height:" << size.second;
+        chartSizes.push_back(size);
     }
     ChartPacker chartPacker;
     chartPacker.setCharts(chartSizes);
+    chartPacker.pack();
     const std::vector<std::tuple<float, float, float, float, bool>> &packedResult = chartPacker.getResult();
     for (decltype(m_charts.size()) i = 0; i < m_charts.size(); ++i) {
+        const auto &chartSize = chartSizes[i];
         auto &chart = m_charts[i];
         const auto &result = packedResult[i];
         auto &left = std::get<0>(result);
@@ -257,8 +266,10 @@ void UvUnwrapper::packCharts()
         }
         for (auto &item: chart.second) {
             for (int i = 0; i < 3; ++i) {
-                item.coords[i].uv[0] /= width;
-                item.coords[i].uv[1] /= height;
+                item.coords[i].uv[0] /= chartSize.first;
+                item.coords[i].uv[1] /= chartSize.second;
+                item.coords[i].uv[0] *= width;
+                item.coords[i].uv[1] *= height;
                 item.coords[i].uv[0] += left;
                 item.coords[i].uv[1] += top;
             }
@@ -294,6 +305,9 @@ void UvUnwrapper::partition()
 
 void UvUnwrapper::unwrapSingleIsland(const std::vector<size_t> &group, bool skipCheckHoles)
 {
+    if (group.empty())
+        return;
+    
     std::vector<Vertex> localVertices;
     std::vector<Face> localFaces;
     std::map<size_t, size_t> globalToLocalVerticesMap;
@@ -313,14 +327,15 @@ void UvUnwrapper::unwrapSingleIsland(const std::vector<size_t> &group, bool skip
         localToGlobalFacesMap[localFaces.size() - 1] = group[i];
     }
 
-    if (skipCheckHoles) {
-        parametrizeSingleGroup(localVertices, localFaces, localToGlobalFacesMap, localFaces.size());
-        return;
-    }
+    //if (skipCheckHoles) {
+    //    parametrizeSingleGroup(localVertices, localFaces, localToGlobalFacesMap, localFaces.size());
+    //    return;
+    //}
 
     decltype(localFaces.size()) faceNumBeforeFix = localFaces.size();
     size_t remainingHoleNumAfterFix = 0;
     if (!fixHolesExceptTheLongestRing(localVertices, localFaces, &remainingHoleNumAfterFix)) {
+        qDebug() << "fixHolesExceptTheLongestRing failed";
         return;
     }
     if (1 == remainingHoleNumAfterFix) {
@@ -332,11 +347,9 @@ void UvUnwrapper::unwrapSingleIsland(const std::vector<size_t> &group, bool skip
         std::vector<size_t> firstGroup;
         std::vector<size_t> secondGroup;
         makeSeamAndCut(localVertices, localFaces, localToGlobalFacesMap, firstGroup, secondGroup);
-        for (auto &index: firstGroup) {
-            index = localToGlobalFacesMap[index];
-        }
-        for (auto &index: secondGroup) {
-            index = localToGlobalFacesMap[index];
+        if (firstGroup.empty() || secondGroup.empty()) {
+            qDebug() << "Cut mesh failed";
+            return;
         }
         unwrapSingleIsland(firstGroup, true);
         unwrapSingleIsland(secondGroup, true);
@@ -349,6 +362,10 @@ void UvUnwrapper::parametrizeSingleGroup(const std::vector<Vertex> &verticies,
         std::map<size_t, size_t> &localToGlobalFacesMap,
         size_t faceNumToChart)
 {
+    if (faces.size() <= 3) {
+        // FIXME: We need handle this case
+        return;
+    }
     std::vector<TextureCoord> localVertexUvs;
     parametrize(verticies, faces, localVertexUvs);
     std::pair<std::vector<size_t>, std::vector<FaceTextureCoords>> chart;

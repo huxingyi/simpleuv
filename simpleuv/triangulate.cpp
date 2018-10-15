@@ -53,8 +53,8 @@ static QVector3D ringNorm(const std::vector<Vertex> &vertices, const std::vector
 {
     QVector3D normal;
     for (size_t i = 0; i < ring.size(); ++i) {
-        auto j = (i + 1) % vertices.size();
-        auto k = (i + 2) % vertices.size();
+        auto j = (i + 1) % ring.size();
+        auto k = (i + 2) % ring.size();
         const auto &enter = vertexToQVector3D(vertices[ring[i]]);
         const auto &cone = vertexToQVector3D(vertices[ring[j]]);
         const auto &leave = vertexToQVector3D(vertices[ring[k]]);
@@ -65,6 +65,8 @@ static QVector3D ringNorm(const std::vector<Vertex> &vertices, const std::vector
 
 void triangulate(const std::vector<Vertex> &vertices, std::vector<Face> &faces, const std::vector<size_t> &ring)
 {
+    if (ring.size() < 3)
+        return;
     std::vector<size_t> fillRing = ring;
     QVector3D direct = ringNorm(vertices, fillRing);
     while (fillRing.size() > 3) {

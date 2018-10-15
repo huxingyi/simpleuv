@@ -20,7 +20,7 @@ private:
     std::vector<std::tuple<float, float, float, float, bool>> m_result;
     float m_initialAreaGuessFactor = 1.0;
     float m_textureSizeGrowFactor = 0.1;
-    float m_floatToIntFactor = 100;
+    float m_floatToIntFactor = 10000;
 };
 
 }
