@@ -88,8 +88,8 @@ void triangulate(const std::vector<Vertex> &vertices, std::vector<Face> &faces, 
                 if (isEar) {
                     Face newFace;
                     newFace.indicies[0] = fillRing[i];
-                    newFace.indicies[0] = fillRing[j];
-                    newFace.indicies[0] = fillRing[k];
+                    newFace.indicies[1] = fillRing[j];
+                    newFace.indicies[2] = fillRing[k];
                     faces.push_back(newFace);
                     fillRing.erase(fillRing.begin() + j);
                     newFaceGenerated = true;
@@ -99,6 +99,13 @@ void triangulate(const std::vector<Vertex> &vertices, std::vector<Face> &faces, 
         }
         if (!newFaceGenerated)
             break;
+    }
+    if (fillRing.size() == 3) {
+        Face newFace;
+        newFace.indicies[0] = fillRing[0];
+        newFace.indicies[1] = fillRing[1];
+        newFace.indicies[2] = fillRing[2];
+        faces.push_back(newFace);
     }
 }
 
