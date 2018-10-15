@@ -10,12 +10,12 @@ namespace simpleuv
 
 // Modified from the libigl example code
 // https://github.com/libigl/libigl/blob/master/tutorial/503_ARAPParam/main.cpp
-void parametrize(const std::vector<Vertex> &verticies, 
+bool parametrize(const std::vector<Vertex> &verticies,
         const std::vector<Face> &faces, 
         std::vector<TextureCoord> &vertexUvs)
 {
     if (verticies.empty() || faces.empty())
-        return;
+        return false;
     
     qDebug() << "parametrize vertices:" << verticies.size() << "faces:" << faces.size();
 
@@ -65,6 +65,8 @@ void parametrize(const std::vector<Vertex> &verticies,
         coord.uv[1] = V_uv.row(i)[1];
         vertexUvs.push_back(coord);
     }
+    
+    return true;
 }
 
 }

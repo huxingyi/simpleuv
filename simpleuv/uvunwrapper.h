@@ -27,6 +27,7 @@ private:
         const std::vector<Face> &faces,
         std::map<size_t, size_t> &localToGlobalFacesMap,
         std::vector<size_t> &firstGroup, std::vector<size_t> &secondGroup);
+    void calculateSizeAndRemoveInvalidCharts();
     void packCharts();
     void finalizeUv();
     void buildEdgeToFaceMap(const std::vector<size_t> &group, std::map<std::pair<size_t, size_t>, size_t> &edgeToFaceMap);
@@ -41,6 +42,7 @@ private:
     std::vector<FaceTextureCoords> m_faceUvs;
     std::map<int, std::vector<size_t>> m_partitions;
     std::vector<std::pair<std::vector<size_t>, std::vector<FaceTextureCoords>>> m_charts;
+    std::vector<std::pair<float, float>> m_chartSizes;
 };
 
 }

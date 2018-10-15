@@ -5,7 +5,7 @@
 namespace simpleuv
 {
 
-void parametrize(const std::vector<Vertex> &verticies, 
+bool parametrize(const std::vector<Vertex> &verticies, 
         const std::vector<Face> &faces, 
         std::vector<TextureCoord> &vertexUvs);
 

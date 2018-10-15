@@ -245,14 +245,19 @@ void UvUnwrapper::makeSeamAndCut(const std::vector<Vertex> &verticies,
     }
 }
 
-void UvUnwrapper::packCharts()
+void UvUnwrapper::calculateSizeAndRemoveInvalidCharts()
 {
-    std::vector<std::pair<float, float>> chartSizes;
-    for (auto &chart: m_charts) {
+    auto charts = m_charts;
+    m_charts.clear();
+    for (auto &chart: charts) {
         float left, top, right, bottom;
         left = top = right = bottom = 0;
         calculateFaceTextureBoundingBox(chart.second, left, top, right, bottom);
         std::pair<float, float> size = {right - left, bottom - top};
+        if (size.first <= 0 || std::isnan(size.first) || size.second <= 0 || std::isnan(size.second)) {
+            qDebug() << "Found invalid chart size:" << size.first << "x" << size.second;
+            continue;
+        }
         for (auto &item: chart.second) {
             for (int i = 0; i < 3; ++i) {
                 item.coords[i].uv[0] -= left;
@@ -261,14 +266,19 @@ void UvUnwrapper::packCharts()
         }
         qDebug() << "left:" << left << "top:" << top << "right:" << right << "bottom:" << bottom;
         qDebug() << "width:" << size.first << "height:" << size.second;
-        chartSizes.push_back(size);
+        m_chartSizes.push_back(size);
+        m_charts.push_back(chart);
     }
+}
+
+void UvUnwrapper::packCharts()
+{
     ChartPacker chartPacker;
-    chartPacker.setCharts(chartSizes);
+    chartPacker.setCharts(m_chartSizes);
     chartPacker.pack();
     const std::vector<std::tuple<float, float, float, float, bool>> &packedResult = chartPacker.getResult();
     for (decltype(m_charts.size()) i = 0; i < m_charts.size(); ++i) {
-        const auto &chartSize = chartSizes[i];
+        const auto &chartSize = m_chartSizes[i];
         auto &chart = m_charts[i];
         const auto &result = packedResult[i];
         auto &left = std::get<0>(result);
@@ -381,12 +391,9 @@ void UvUnwrapper::parametrizeSingleGroup(const std::vector<Vertex> &verticies,
         std::map<size_t, size_t> &localToGlobalFacesMap,
         size_t faceNumToChart)
 {
-    if (faces.size() <= 3) {
-        // FIXME: We need handle this case
-        return;
-    }
     std::vector<TextureCoord> localVertexUvs;
-    parametrize(verticies, faces, localVertexUvs);
+    if (!parametrize(verticies, faces, localVertexUvs))
+        return;
     std::pair<std::vector<size_t>, std::vector<FaceTextureCoords>> chart;
     for (size_t i = 0; i < faceNumToChart; ++i) {
         const auto &localFace = faces[i];
@@ -417,7 +424,8 @@ void UvUnwrapper::unwrap()
         for (const auto &island: islands)
             unwrapSingleIsland(island);
     }
-
+    
+    calculateSizeAndRemoveInvalidCharts();
     packCharts();
     finalizeUv();
 }
