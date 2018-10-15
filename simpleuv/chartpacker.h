@@ -18,9 +18,11 @@ private:
 
     std::vector<std::pair<float, float>> m_chartSizes;
     std::vector<std::tuple<float, float, float, float, bool>> m_result;
-    float m_initialAreaGuessFactor = 1.0;
-    float m_textureSizeGrowFactor = 0.1;
+    float m_initialAreaGuessFactor = 1.05;
+    float m_textureSizeGrowFactor = 0.01;
     float m_floatToIntFactor = 10000;
+    size_t m_tryNum = 0;
+    float m_textureSizeFactor = 1.0;
 };
 
 }

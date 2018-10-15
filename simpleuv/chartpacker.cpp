@@ -32,7 +32,7 @@ bool ChartPacker::tryPack(float textureSize)
     std::vector<maxRectsSize> rects;
     int width = textureSize * m_floatToIntFactor;
     int height = width;
-    qDebug() << "Try pack with size:" << width << "x" << height;
+    qDebug() << "Try the " << m_tryNum << "nth times pack with factor:" << m_textureSizeFactor << " size:" << width << "x" << height;
     for (const auto &chartSize: m_chartSizes) {
         maxRectsSize r;
         r.width = chartSize.first * m_floatToIntFactor;
@@ -71,7 +71,7 @@ bool ChartPacker::tryPack(float textureSize)
         const auto &rect = rects[i];
         auto &dest = m_result[i];
         dest = {(float)result.left / width, (float)result.top / height, (float)rect.width / width, (float)rect.height / height, result.rotated};
-        qDebug() << "result[" << i << "]:" << std::get<0>(dest) << std::get<1>(dest) << std::get<2>(dest) << std::get<3>(dest) << std::get<4>(dest);
+        //qDebug() << "result[" << i << "]:" << std::get<0>(dest) << std::get<1>(dest) << std::get<2>(dest) << std::get<3>(dest) << std::get<4>(dest);
     }
     return true;
 }
@@ -79,11 +79,12 @@ bool ChartPacker::tryPack(float textureSize)
 void ChartPacker::pack()
 {
     float initialGuessSize = std::sqrt(calculateTotalArea() * m_initialAreaGuessFactor);
-    float textureSize = initialGuessSize;
     while (true) {
+        float textureSize = initialGuessSize * m_textureSizeFactor;
+        ++m_tryNum;
         if (tryPack(textureSize))
             break;
-        textureSize *= 1.0 + m_textureSizeGrowFactor;
+        m_textureSizeFactor += m_textureSizeGrowFactor;
     }
 }
 

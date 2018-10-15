@@ -190,39 +190,58 @@ bool UvUnwrapper::fixHolesExceptTheLongestRing(const std::vector<Vertex> &vertic
     return true;
 }
 
-// FIXME: Currently we cut off the mesh by the middle y value for the sake of easy implementation.
 void UvUnwrapper::makeSeamAndCut(const std::vector<Vertex> &verticies,
         const std::vector<Face> &faces,
         std::map<size_t, size_t> &localToGlobalFacesMap,
         std::vector<size_t> &firstGroup, std::vector<size_t> &secondGroup)
 {
-    double sumY = 0;
-    size_t countY = 0;
+    // We group the chart by first pick the top(max y) triangle, then join the adjecent traigles until the joint count reach to half of total
+    
+    double maxY = 0;
+    bool firstTime = true;
+    int choosenIndex = -1;
     for (decltype(faces.size()) i = 0; i < faces.size(); ++i) {
         const auto &face = faces[i];
         for (int j = 0; j < 3; ++j) {
             const auto &vertex = verticies[face.indicies[j]];
-            sumY += vertex.xyz[2];
-            ++countY;
-        }
-    }
-    if (countY == 0)
-        return;
-    float averageY = (float)(sumY / countY);
-    for (decltype(faces.size()) i = 0; i < faces.size(); ++i) {
-        const auto &face = faces[i];
-        bool insertToFirst = true;
-        for (int j = 0; j < 3; ++j) {
-            const auto &vertex = verticies[face.indicies[j]];
-            if (vertex.xyz[2] >= averageY) {
-                insertToFirst = false;
-                break;
+            if (firstTime || vertex.xyz[2] > maxY) {
+                maxY = vertex.xyz[2];
+                firstTime = false;
+                choosenIndex = i;
             }
         }
-        if (insertToFirst)
-            firstGroup.push_back(localToGlobalFacesMap[i]);
-        else
-            secondGroup.push_back(localToGlobalFacesMap[i]);
+    }
+    if (-1 == choosenIndex)
+        return;
+    
+    std::map<std::pair<size_t, size_t>, size_t> edgeToFaceMap;
+    buildEdgeToFaceMap(faces, edgeToFaceMap);
+    
+    std::unordered_set<size_t> processedFaces;
+    std::queue<size_t> waitFaces;
+    waitFaces.push(choosenIndex);
+    while (!waitFaces.empty()) {
+        auto index = waitFaces.front();
+        waitFaces.pop();
+        if (processedFaces.find(index) != processedFaces.end())
+            continue;
+        const auto &face = faces[index];
+        for (size_t i = 0; i < 3; i++) {
+            size_t j = (i + 1) % 3;
+            auto findOppositeFaceResult = edgeToFaceMap.find({face.indicies[j], face.indicies[i]});
+            if (findOppositeFaceResult == edgeToFaceMap.end())
+                continue;
+            waitFaces.push(findOppositeFaceResult->second);
+        }
+        processedFaces.insert(index);
+        firstGroup.push_back(localToGlobalFacesMap[index]);
+        if (firstGroup.size() * 2 >= faces.size())
+            break;
+    }
+    for (decltype(faces.size()) index = 0; index < faces.size(); ++index) {
+        if (processedFaces.find(index) != processedFaces.end())
+            continue;
+        secondGroup.push_back(localToGlobalFacesMap[index]);
     }
 }
 
