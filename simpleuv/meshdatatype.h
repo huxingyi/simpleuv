@@ -12,7 +12,7 @@ struct Vertex
 
 struct Face
 {
-    int indicies[3];
+    size_t indicies[3];
 };
 
 struct TextureCoord

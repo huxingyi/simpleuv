@@ -4,8 +4,9 @@ CONFIG += release
 DEFINES += NDEBUG
 
 INCLUDEPATH += ./
-INCLUDEPATH += ./thirdparty/libigl/include
-INCLUDEPATH += ./thirdparty/eigen
+INCLUDEPATH += thirdparty/libigl/include
+INCLUDEPATH += thirdparty/eigen
+INCLUDEPATH += thirdparty/squeezer
 
 SOURCES += simpleuv/parametrize.cpp
 HEADERS += simpleuv/parametrize.h
@@ -13,7 +14,13 @@ HEADERS += simpleuv/parametrize.h
 SOURCES += simpleuv/uvunwrapper.cpp
 HEADERS += simpleuv/uvunwrapper.h
 
+SOURCES += simpleuv/chartpacker.cpp
+HEADERS += simpleuv/chartpacker.h
+
 HEADERS += simpleuv/meshdatatype.h
+
+SOURCES += thirdparty/squeezer/maxrects.c
+HEADERS += thirdparty/squeezer/maxrects.h
 
 QMAKE_CXXFLAGS += -std=c++11
 
