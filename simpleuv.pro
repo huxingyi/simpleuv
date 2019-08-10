@@ -20,6 +20,7 @@ HEADERS += simpleuv/chartpacker.h
 SOURCES += simpleuv/triangulate.cpp
 HEADERS += simpleuv/triangulate.h
 
+SOURCES += simpleuv/meshdatatype.cpp
 HEADERS += simpleuv/meshdatatype.h
 
 SOURCES += thirdparty/squeezer/maxrects.c
